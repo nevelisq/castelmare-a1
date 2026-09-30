@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Castelmare A1</title>
+<style>
+:root{--ink:#2a1c14;--paper:#f6ead7;--gold:#c9a15b;--sea:#2c5f6e}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1a120c;color:var(--ink);font:16px/1.45 system-ui,sans-serif}
+#app{max-width:520px;margin:0 auto;min-height:100%;background:var(--paper);display:flex;flex-direction:column}
+header{padding:12px 16px 8px;background:#2a1c14;color:#f6ead7}
+header b{color:var(--gold)}
+.cel{font-size:13px;opacity:.9;margin-top:4px}
+.stage{height:140px}
+.stage.stazione{background:linear-gradient(#7eb6d0,#f2c572 55%,#c45c32)}
+.stage.piazza{background:linear-gradient(#87b8c9,#e8d5a8 50%,#8a6a3b)}
+.stage.bar{background:linear-gradient(#5a3a28,#c9a15b 70%,#3a2418)}
+.stage.mercato{background:linear-gradient(#6aa35a,#e8c96a 60%,#c45c32)}
+.stage.albergo{background:linear-gradient(#4a6d7a,#d7c4a0 55%,#8a3a2a)}
+.who{padding:10px 16px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7a5a3a}
+.it{padding:4px 16px 0;font-size:22px;font-weight:600}
+.pl{padding:2px 16px 10px;color:#5a4a3a}
+.notes{margin:0 16px 10px;padding:8px 10px;background:#ead9bf;border-radius:10px;font-size:13px}
+.choices{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
+button{appearance:none;border:0;border-radius:12px;padding:14px;font:inherit;background:#2a1c14;color:#f6ead7;text-align:left}
+.surv{display:flex;gap:6px;padding:0 16px 18px}
+.surv button{flex:1;padding:10px;font-size:13px;background:#2c5f6e}
+.end{padding:20px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const N = {
+intro:{loc:"stazione",who:"Misja",it:"Porta questa lettera ad Anna Rossi. Albergo Sole.",pl:"CEL: oddaj list Annie Rossi w hotelu Albergo Sole. Ludzie mowia po wlosku. Gra najpierw pokazuje zdanie, potem go uzywasz.",ch:[{t:"Zaczynam.",n:"l1"}]},
+l1:{loc:"stazione",who:"Lucia",it:"Buongiorno!",pl:"Dzien dobry! Powtorz tylko to.",note:"Buongiorno. = Dzien dobry.",ch:[{t:"Buongiorno.",n:"l2",ok:1}]},
+l2:{loc:"stazione",who:"Lucia",it:"Io sono Lucia.",pl:"Jestem Lucia. Najpierw potwierdz.",note:"Io sono Lucia. = Jestem Lucia.",ch:[{t:"Piacere, Lucia.",n:"l3",ok:1},{t:"Non capisco.",n:"l2b"}]},
+l2b:{loc:"stazione",who:"Lucia",it:"Piano. Io sono Lucia.",pl:"Powoli. Teraz: Piacere, Lucia. = Milo mi.",ch:[{t:"Piacere, Lucia.",n:"l3"}]},
+l3:{loc:"stazione",who:"Lucia",it:"E Lei? Io sono Lucia. Lei?",pl:"A pani? Ten sam wzor ze swoim imieniem.",note:"Io sono Maja. = Jestem Maja.",ch:[{t:"Io sono Maja.",n:"l4",ok:1},{t:"Maja.",n:"l3b"}]},
+l3b:{loc:"stazione",who:"Lucia",it:"Si dice: Io sono Maja.",pl:"Mowi sie: Io sono Maja.",ch:[{t:"Io sono Maja.",n:"l4"}]},
+l4:{loc:"stazione",who:"Lucia",it:"Piacere, Maja. Si dice anche: Mi chiamo Maja.",pl:"Drugi wzor: Nazywam sie Maja.",note:"Mi chiamo Maja. = Nazywam sie Maja.",ch:[{t:"Mi chiamo Maja. Piacere.",n:"l5",ok:1}]},
+l5:{loc:"stazione",who:"Lucia",it:"Molto bene. Sempre dritto.",pl:"Bardzo dobrze. Caly czas prosto.",note:"Grazie. = Dziekuje.",ch:[{t:"Grazie, Lucia.",n:"d1end",ok:1}]},
+d1end:{loc:"piazza",who:"Castelmare",it:"Ecco la piazza.",pl:"Dzien 1: Buongiorno, Io sono, Mi chiamo, Grazie.",ch:[{t:"Dzien 2 — bar",n:"d2"}]},
+d2:{loc:"bar",who:"Paolo",it:"Buongiorno! Un caffe?",pl:"Kawe? Powtorz wzor.",note:"Un caffe, per favore. = Kawe, prosze.",ch:[{t:"Buongiorno. Un caffe, per favore.",n:"d2b",ok:1},{t:"Un caffe.",n:"d2a"}]},
+d2a:{loc:"bar",who:"Paolo",it:"Si dice: Un caffe, per favore.",pl:"Pelna forma.",ch:[{t:"Un caffe, per favore.",n:"d2b"}]},
+d2b:{loc:"bar",who:"Paolo",it:"Di dove e?",pl:"Skad jestes?",note:"Sono polacca. = Jestem Polka.",ch:[{t:"Sono polacca. Abito in Polonia.",n:"d2c",ok:1},{t:"Polonia.",n:"d2c2"}]},
+d2c2:{loc:"bar",who:"Paolo",it:"Si dice: Sono polacca. Abito in Polonia.",pl:"Pelna forma.",ch:[{t:"Sono polacca. Abito in Polonia.",n:"d2c"}]},
+d2c:{loc:"bar",who:"Paolo",it:"Anna Rossi lavora all Albergo Sole.",pl:"Anna pracuje w Albergo Sole. To Twoj cel.",ch:[{t:"Cerco Anna Rossi. Grazie.",n:"d2end",ok:1}]},
+d2end:{loc:"piazza",who:"Castelmare",it:"Hai un nome: Albergo Sole.",pl:"Jutro zapytasz o droge.",ch:[{t:"Dzien 3 — droga",n:"d3"}]},
+d3:{loc:"piazza",who:"Un signore",it:"Si?",pl:"Wzór: Scusi, dov'e...",note:"Scusi, dov'e l'albergo? = Gdzie jest hotel?",ch:[{t:"Scusi, dov'e l'Albergo Sole?",n:"d3b",ok:1},{t:"Albergo?",n:"d3a"}]},
+d3a:{loc:"piazza",who:"Un signore",it:"Si dice: Scusi, dov'e l'albergo?",pl:"Pelne zdanie.",ch:[{t:"Scusi, dov'e l'Albergo Sole?",n:"d3b"}]},
+d3b:{loc:"piazza",who:"Un signore",it:"Dritto, poi a sinistra.",pl:"Prosto, potem w lewo.",ch:[{t:"Dritto, poi a sinistra. Grazie.",n:"d3end",ok:1}]},
+d3end:{loc:"albergo",who:"Castelmare",it:"Albergo Sole. Oggi chiuso.",pl:"Hotel zamkniety. Dzis rynek.",ch:[{t:"Dzien 4 — rynek",n:"d4"}]},
+d4:{loc:"mercato",who:"Mara",it:"Cosa prende?",pl:"Co podac?",note:"Quanto costa? = Ile kosztuje?",ch:[{t:"Il pane, per favore. Quanto costa?",n:"d4b",ok:1},{t:"Pane.",n:"d4a"}]},
+d4a:{loc:"mercato",who:"Mara",it:"Il pane. Due euro.",pl:"Chleb. Dwa euro.",ch:[{t:"Va bene.",n:"d4end"}]},
+d4b:{loc:"mercato",who:"Mara",it:"Due euro. Anche le uova?",pl:"Dwa euro. Takze jajka?",ch:[{t:"Si. Il pane e le uova, per favore.",n:"d4end",ok:1},{t:"No, grazie. Solo il pane.",n:"d4end"}]},
+d4end:{loc:"mercato",who:"Castelmare",it:"Hai il pane.",pl:"Jutro hotel otwarty.",ch:[{t:"Dzien 5 — hotel",n:"d5"}]},
+d5:{loc:"albergo",who:"Rosa",it:"Ha una prenotazione?",pl:"Czy ma pani rezerwacje?",note:"Non ho una prenotazione. = Nie mam rezerwacji.",ch:[{t:"Non ho una prenotazione.",n:"d5b",ok:1},{t:"No.",n:"d5a"}]},
+d5a:{loc:"albergo",who:"Rosa",it:"Come si chiama?",pl:"Jak sie pani nazywa?",ch:[{t:"Mi chiamo Maja.",n:"d5c"}]},
+d5b:{loc:"albergo",who:"Rosa",it:"Come si chiama?",pl:"To juz umiesz z dnia 1.",ch:[{t:"Mi chiamo Maja. Sono polacca.",n:"d5c",ok:1}]},
+d5c:{loc:"albergo",who:"Rosa",it:"Stanza 3. Venti euro. Anna arriva domani.",pl:"Pokoj 3. 20 euro. Anna jutro rano.",ch:[{t:"Grazie.",n:"d5end"}]},
+d5end:{loc:"albergo",who:"Castelmare",it:"Hai una stanza.",pl:"Jutro oddajesz list.",ch:[{t:"Dzien 6 — Anna",n:"d6"}]},
+d6:{loc:"albergo",who:"Anna",it:"Buongiorno. Lei e...?",pl:"Zloz to, czego sie nauczylas.",ch:[{t:"Mi chiamo Maja. Ho una lettera per Anna Rossi.",n:"d6ok",ok:1},{t:"Lettera. Anna.",n:"d6ok2"}]},
+d6ok2:{loc:"albergo",who:"Anna",it:"Sono Anna. Grazie.",pl:"List bierze.",ch:[{t:"Grazie.",n:"end"}]},
+d6ok:{loc:"albergo",who:"Anna",it:"Sono Anna. La lettera e arrivata.",pl:"List doszedl. To wygrana.",ch:[{t:"Finito.",n:"end"}]},
+end:{loc:"albergo",who:"Fine",it:"Brava, Maja.",pl:"Poziom A1 zaliczony w kontekscie.",end:1}
+};
+const S={id:"intro",ok:0,notes:[]};
+function go(id){S.id=id;draw()}
+function pick(c){if(c.ok)S.ok++;if(c.note);go(c.n)}
+function draw(){
+const n=N[S.id],app=document.getElementById("app");
+if(n.end){app.innerHTML='<div class="end"><h2>List doszedl.</h2><p>Maja oddala kopertę Annie Rossi.</p><p>Chiarezza: '+S.ok+'</p><button onclick="S.id=\'intro\';S.ok=0;S.notes=[];draw()">Jeszcze raz</button></div>';return;}
+if(n.note&&S.notes.indexOf(n.note)<0)S.notes.push(n.note);
+app.innerHTML='<header><div><b>Castelmare A1</b> \u00b7 Maja</div><div class="cel">Cel: list → Anna Rossi, Albergo Sole</div></header><div class="stage '+n.loc+'"></div><div class="who">'+n.who+'</div><div class="it">'+n.it+'</div><div class="pl">'+n.pl+'</div><div class="notes">'+(S.notes.slice(-2).join("<br>")||"")+'</div><div class="choices">'+n.ch.map(function(c,i){return '<button onclick="pick(N[S.id].ch['+i+'])">'+c.t+'</button>'}).join("")+'</div><div class="surv"><button onclick="alert(n.pl)">Non capisco.</button></div>';
+}
+draw();
+</script>
+</body>
+</html>
